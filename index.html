@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <title>系統錯誤</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      background-color: black;
+      color: #00ff00;
+      font-family: monospace;
+      font-size: 16px;
+      overflow: hidden;
+      height: 100%;
+      cursor: none;
+    }
+    #terminal {
+      padding: 20px;
+      white-space: pre-line;
+    }
+    .blinker {
+      display: inline-block;
+      width: 10px;
+      background: #00ff00;
+      animation: blink 1s step-end infinite;
+    }
+    @keyframes blink {
+      50% { background: transparent; }
+    }
+
+    #bsod {
+      display: none;
+      background-color: #0000AA;
+      color: white;
+      font-family: Consolas, monospace;
+      font-size: 20px;
+      padding: 40px;
+      height: 100%;
+      width: 100%;
+      position: fixed;
+      top: 0;
+      left: 0;
+      z-index: 9998;
+      line-height: 1.5;
+      animation: flash 0.3s ease-in-out 6 alternate;
+    }
+
+    @keyframes flash {
+      from { opacity: 1; }
+      to { opacity: 0.4; }
+    }
+
+    #shutdown {
+      display: none;
+      background-color: black;
+      color: white;
+      font-size: 28px;
+      text-align: center;
+      padding-top: 25%;
+      position: fixed;
+      top: 0;
+      left: 0;
+      height: 100%;
+      width: 100%;
+      z-index: 9999;
+    }
+    #shutdown::after {
+      content: "_";
+      animation: blink 1s step-end infinite;
+    }
+
+    #lockedMessage {
+      display: none;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background-color: rgba(255, 0, 0, 0.85);
+      color: white;
+      font-size: 20px;
+      padding: 15px 30px;
+      border-radius: 8px;
+      z-index: 10000;
+      animation: fadein 0.2s ease;
+    }
+
+    @keyframes fadein {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+  </style>
+</head>
+<body onclick="enterFullscreen()">
+  <div id="terminal"></div><span class="blinker"></span>
+  <div id="bsod">
+    發生致命錯誤<br>
+    系統將在 <span id="countdown">10</span> 秒後關機以防止損害。<br><br>
+    如果這是第一次看到這個畫面，請重新啟動你的電腦。<br>
+    如果再次出現此畫面，請聯絡你的系統管理員。<br><br>
+    *** STOP: 0x0000C0DE (錯誤碼 42)<br>
+    系統控制權已被轉移。
+  </div>
+  <div id="shutdown">系統已關機。</div>
+  <div id="lockedMessage">輸入被系統鎖定。</div>
+
+  <script>
+    const terminal = document.getElementById('terminal');
+    const bsod = document.getElementById('bsod');
+    const shutdown = document.getElementById('shutdown');
+    const countdownEl = document.getElementById('countdown');
+    const lockedMessage = document.getElementById('lockedMessage');
+
+    const lines = [
+      "---&--&---嗨$$######聖聖",
+      "...進入中 ",
+      "...進入中 ",
+      "...進入中 ",
+      "...進入中 ",
+      "...進入中 ",
+      "...進入中 ",
+      "5%  7%  10%   23%   57%   99%",
+      "連線至主機：192.168.0.1",
+      "___掃描",
+      "_______掃描",
+      "繞過防火牆中...",
+      "___",
+      "成功：防禦系統已關閉。",
+      "____入侵系統資料庫...",
+      "________正在提取帳號密碼...",
+      "____檔案已複製至外部伺服器。",
+      "__執行遠端控制模組...",
+      "__鎖定使用者輸入...",
+      "警告： 系統已被接管。",
+      "請勿關閉電腦..."
+    ];
+
+    let index = 0;
+    function typeLine() {
+      if (index < lines.length) {
+        let text = lines[index];
+        let i = 0;
+        let interval = setInterval(() => {
+          terminal.innerHTML += text[i++];
+          if (i >= text.length) {
+            clearInterval(interval);
+            terminal.innerHTML += "\n";
+            index++;
+            setTimeout(typeLine, 400);
+          }
+        }, 50);
+      } else {
+        setTimeout(triggerBSOD, 2000);
+      }
+    }
+
+    function triggerBSOD() {
+      terminal.style.display = "none";
+      document.querySelector(".blinker").style.display = "none";
+      bsod.style.display = "block";
+
+      let seconds = 10;
+      const countdown = setInterval(() => {
+        seconds--;
+        countdownEl.textContent = seconds;
+        if (seconds <= 0) {
+          clearInterval(countdown);
+          bsod.style.display = "none";
+          shutdown.style.display = "block";
+          setTimeout(() => {
+            location.reload();
+          }, 15000);
+        }
+      }, 1000);
+    }
+
+    function enterFullscreen() {
+      const docElm = document.documentElement;
+      if (docElm.requestFullscreen) docElm.requestFullscreen();
+      else if (docElm.mozRequestFullScreen) docElm.mozRequestFullScreen();
+      else if (docElm.webkitRequestFullscreen) docElm.webkitRequestFullscreen();
+      else if (docElm.msRequestFullscreen) docElm.msRequestFullscreen();
+    }
+
+    function showLockedMessage() {
+      lockedMessage.style.display = "block";
+      setTimeout(() => {
+        lockedMessage.style.display = "none";
+      }, 1500);
+    }
+
+    document.onkeydown = (e) => {
+      e.preventDefault();
+      showLockedMessage();
+    };
+    document.onmousedown = (e) => {
+      e.preventDefault();
+      showLockedMessage();
+    };
+    document.oncontextmenu = () => false;
+
+    typeLine();
+  </script>
+</body>
+</html>
